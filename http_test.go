@@ -98,6 +98,9 @@ func TestHTTPContract(t *testing.T) {
 			if w.Header().Get("X-Content-Type-Options") != "nosniff" || w.Header().Get("Cache-Control") != "no-store" {
 				t.Fatal("missing response safeguards")
 			}
+			if w.Header().Get("Content-Security-Policy") != "default-src 'none'; frame-ancestors 'none'" {
+				t.Fatal("missing content security policy")
+			}
 			if tc.method == "GET" && tc.status == 200 {
 				var body map[string]string
 				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
