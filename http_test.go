@@ -116,6 +116,12 @@ func TestHTTPContract(t *testing.T) {
 					t.Fatal("probe not healthy")
 				}
 			}
+			if tc.method == "GET" && tc.status == 404 {
+				var body map[string]string
+				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || body["error"] != "not found" {
+					t.Fatalf("unexpected not-found response: %s", w.Body)
+				}
+			}
 		})
 	}
 }

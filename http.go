@@ -22,6 +22,9 @@ func handler(logger *slog.Logger) http.Handler {
 			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 		})
 	}
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		requestID := rand.Text()
