@@ -122,6 +122,15 @@ func TestHTTPContract(t *testing.T) {
 					t.Fatalf("unexpected not-found response: %s", w.Body)
 				}
 			}
+			if tc.status == http.StatusMethodNotAllowed {
+				var body map[string]string
+				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || body["error"] != "method not allowed" {
+					t.Fatalf("unexpected method response: %s", w.Body)
+				}
+				if w.Header().Get("Allow") != "GET, HEAD" {
+					t.Fatal("missing Allow header")
+				}
+			}
 		})
 	}
 }

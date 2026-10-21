@@ -42,6 +42,12 @@ func handler(logger *slog.Logger) http.Handler {
 			}
 			logger.Info("request", "request_id", requestID, "method", r.Method, "path", r.URL.Path, "status", recorder.status, "bytes_written", recorder.bytes, "duration_ms", time.Since(start).Milliseconds())
 		}()
+		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/healthz" || r.URL.Path == "/readyz"
+		if known && r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			writeJSON(recorder, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
 		mux.ServeHTTP(recorder, r)
 	})
 }
