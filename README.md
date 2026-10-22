@@ -91,6 +91,7 @@ followed by `docker rm portlight` when finished.
 | `/` | Service name, description, and build version | Identify the deployment |
 | `/version` | Service name and build version | Check deployed build metadata |
 | `/healthz` | `{"status":"ok"}` | Confirm HTTP handling is alive |
+| `/livez` | `{"status":"ok"}` | Kubernetes-style liveness probe alias |
 | `/readyz` | `{"status":"ok"}` | Confirm this dependency-free service is ready |
 
 HEAD is supported on these routes. Other methods return 405; unknown routes
