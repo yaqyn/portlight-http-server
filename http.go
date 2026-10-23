@@ -48,6 +48,10 @@ func handler(logger *slog.Logger) http.Handler {
 			writeJSON(recorder, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 			return
 		}
+		if !known {
+			writeJSON(recorder, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
 		mux.ServeHTTP(recorder, r)
 	})
 }
