@@ -90,6 +90,7 @@ followed by `docker rm portlight` when finished.
 | --- | --- | --- |
 | `/` | Service name, description, and build version | Identify the deployment |
 | `/version` | Service name and build version | Check deployed build metadata |
+| `/status` | Service name, health status, and build version | Inspect identity and health together |
 | `/healthz` | `{"status":"ok"}` | Confirm HTTP handling is alive |
 | `/livez` | `{"status":"ok"}` | Kubernetes-style liveness probe alias |
 | `/readyz` | `{"status":"ok"}` | Confirm this dependency-free service is ready |

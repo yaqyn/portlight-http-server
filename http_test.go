@@ -88,7 +88,7 @@ func TestHTTPContract(t *testing.T) {
 	for _, tc := range []struct {
 		method, path string
 		status       int
-	}{{"GET", "/", 200}, {"GET", "/version", 200}, {"GET", "/healthz", 200}, {"GET", "/livez", 200}, {"GET", "/readyz", 200}, {"HEAD", "/", 200}, {"GET", "/missing", 404}, {"POST", "/missing", 404}, {"POST", "/", 405}, {"POST", "/healthz", 405}, {"POST", "/livez", 405}} {
+	}{{"GET", "/", 200}, {"GET", "/version", 200}, {"GET", "/status", 200}, {"GET", "/healthz", 200}, {"GET", "/livez", 200}, {"GET", "/readyz", 200}, {"HEAD", "/", 200}, {"GET", "/missing", 404}, {"POST", "/missing", 404}, {"POST", "/", 405}, {"POST", "/status", 405}, {"POST", "/healthz", 405}, {"POST", "/livez", 405}} {
 		t.Run(tc.method+tc.path, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			h.ServeHTTP(w, httptest.NewRequest(tc.method, tc.path, nil))
@@ -106,7 +106,7 @@ func TestHTTPContract(t *testing.T) {
 				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 					t.Fatal(err)
 				}
-				if (tc.path == "/" || tc.path == "/version") && body["service"] != "Portlight" {
+				if (tc.path == "/" || tc.path == "/version" || tc.path == "/status") && body["service"] != "Portlight" {
 					t.Fatal("wrong service identity")
 				}
 				if tc.path == "/version" && body["version"] == "" {
