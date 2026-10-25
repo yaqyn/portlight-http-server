@@ -24,6 +24,18 @@ func TestRequestLogRecordsWrittenBodyBytes(t *testing.T) {
 	}
 }
 
+func TestStatusReportsServiceUptime(t *testing.T) {
+	response := httptest.NewRecorder()
+	handler(slog.Default()).ServeHTTP(response, httptest.NewRequest("GET", "/status", nil))
+	var body map[string]any
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != 200 {
+		t.Fatalf("status: %d %s", response.Code, response.Body.String())
+	}
+	if uptime, ok := body["uptime_seconds"].(float64); !ok || uptime < 0 {
+		t.Fatalf("missing uptime: %v", body)
+	}
+}
+
 func TestAddress(t *testing.T) {
 	for _, tc := range []struct {
 		port, want string
@@ -102,7 +114,7 @@ func TestHTTPContract(t *testing.T) {
 				t.Fatal("missing content security policy")
 			}
 			if tc.method == "GET" && tc.status == 200 {
-				var body map[string]string
+				var body map[string]any
 				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 					t.Fatal(err)
 				}

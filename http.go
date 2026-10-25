@@ -10,6 +10,7 @@ import (
 )
 
 func handler(logger *slog.Logger) http.Handler {
+	started := time.Now()
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "description": "A small Go HTTP service, built to run predictably.", "version": version})
@@ -18,7 +19,7 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "version": version})
 	})
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "status": "ok", "version": version})
+		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "uptime_seconds": int64(time.Since(started).Seconds())})
 	})
 	for _, path := range []string{"/healthz", "/livez", "/readyz"} {
 		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {
