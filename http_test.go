@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestRequestLogRecordsWrittenBodyBytes(t *testing.T) {
@@ -33,6 +34,11 @@ func TestStatusReportsServiceUptime(t *testing.T) {
 	}
 	if uptime, ok := body["uptime_seconds"].(float64); !ok || uptime < 0 {
 		t.Fatalf("missing uptime: %v", body)
+	}
+	if started, ok := body["started_at"].(string); !ok {
+		t.Fatalf("missing start time: %v", body)
+	} else if _, err := time.Parse(time.RFC3339, started); err != nil {
+		t.Fatalf("invalid start time: %q", started)
 	}
 }
 

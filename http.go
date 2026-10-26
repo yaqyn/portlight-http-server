@@ -19,7 +19,7 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "version": version})
 	})
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "uptime_seconds": int64(time.Since(started).Seconds())})
+		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "started_at": started.UTC().Format(time.RFC3339), "uptime_seconds": int64(time.Since(started).Seconds())})
 	})
 	for _, path := range []string{"/healthz", "/livez", "/readyz"} {
 		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {
