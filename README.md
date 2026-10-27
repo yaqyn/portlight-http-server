@@ -98,6 +98,7 @@ followed by `docker rm portlight` when finished.
 HEAD is supported on these routes. Other methods return 405; unknown routes
 return 404. Responses disable caching and send `X-Content-Type-Options: nosniff`.
 Every response also sends `X-Service-Version` so clients can identify the deployed build without a second request.
+The API has no query options; query parameters on known routes return 400 instead of being silently ignored.
 Health endpoints contain no dependency checks because the service has no database
 or external service dependencies.
 

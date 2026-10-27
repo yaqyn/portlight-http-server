@@ -155,3 +155,15 @@ func TestHTTPContract(t *testing.T) {
 		})
 	}
 }
+
+func TestKnownRoutesRejectAmbiguousQueryParameters(t *testing.T) {
+	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	for _, path := range []string{"/?debug=1", "/status?format=text", "/readyz?full=true"} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+		var body map[string]string
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || w.Code != http.StatusBadRequest || body["error"] != "query parameters are not supported" {
+			t.Fatalf("%s: %d %s", path, w.Code, w.Body.String())
+		}
+	}
+}
