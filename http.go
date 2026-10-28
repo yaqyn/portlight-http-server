@@ -35,6 +35,8 @@ func handler(logger *slog.Logger) http.Handler {
 		w.Header().Set("X-Request-ID", requestID)
 		recorder := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Cross-Origin-Resource-Policy", "same-origin")
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
 		w.Header().Set("Cache-Control", "no-store")
 		defer func() {
