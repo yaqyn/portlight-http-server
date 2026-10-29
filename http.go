@@ -64,6 +64,10 @@ func handler(logger *slog.Logger) http.Handler {
 			writeJSON(recorder, http.StatusNotFound, map[string]string{"error": "not found"})
 			return
 		}
+		if r.URL.RawQuery != "" {
+			writeJSON(recorder, http.StatusBadRequest, map[string]string{"error": "query parameters are not supported"})
+			return
+		}
 		mux.ServeHTTP(recorder, r)
 	})
 }
