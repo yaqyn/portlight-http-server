@@ -33,6 +33,7 @@ func handler(logger *slog.Logger) http.Handler {
 		start := time.Now()
 		requestID := rand.Text()
 		w.Header().Set("X-Request-ID", requestID)
+		w.Header().Set("X-Service-Version", version)
 		recorder := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")

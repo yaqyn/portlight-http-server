@@ -116,6 +116,9 @@ func TestHTTPContract(t *testing.T) {
 			if w.Header().Get("X-Content-Type-Options") != "nosniff" || w.Header().Get("Cache-Control") != "no-store" {
 				t.Fatal("missing response safeguards")
 			}
+			if w.Header().Get("X-Service-Version") != version {
+				t.Fatal("missing service version header")
+			}
 			if w.Header().Get("Permissions-Policy") == "" || w.Header().Get("Cross-Origin-Resource-Policy") != "same-origin" {
 				t.Fatal("missing browser isolation headers")
 			}
