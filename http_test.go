@@ -162,6 +162,17 @@ func TestHTTPContract(t *testing.T) {
 	}
 }
 
+func TestHeadReturnsHeadersWithoutAResponseBody(t *testing.T) {
+	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	for _, path := range []string{"/", "/version", "/status", "/healthz", "/livez", "/readyz"} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(http.MethodHead, path, nil))
+		if w.Code != 200 || w.Body.Len() != 0 || w.Header().Get("Content-Type") != "application/json; charset=utf-8" {
+			t.Fatalf("%s: status=%d body=%q headers=%v", path, w.Code, w.Body.String(), w.Header())
+		}
+	}
+}
+
 func TestKnownRoutesRejectAmbiguousQueryParameters(t *testing.T) {
 	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
 	for _, path := range []string{"/?debug=1", "/status?format=text", "/readyz?full=true"} {

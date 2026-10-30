@@ -68,9 +68,17 @@ func handler(logger *slog.Logger) http.Handler {
 			writeJSON(recorder, http.StatusBadRequest, map[string]string{"error": "query parameters are not supported"})
 			return
 		}
+		if r.Method == http.MethodHead {
+			mux.ServeHTTP(&headResponseWriter{ResponseWriter: recorder}, r)
+			return
+		}
 		mux.ServeHTTP(recorder, r)
 	})
 }
+
+type headResponseWriter struct{ http.ResponseWriter }
+
+func (w *headResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
 
 type responseWriter struct {
 	http.ResponseWriter
