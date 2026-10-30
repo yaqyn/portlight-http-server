@@ -40,6 +40,21 @@ func TestStatusReportsServiceUptime(t *testing.T) {
 	} else if _, err := time.Parse(time.RFC3339, started); err != nil {
 		t.Fatalf("invalid start time: %q", started)
 	}
+	if body["requests_total"] != float64(1) {
+		t.Fatalf("unexpected request count: %v", body)
+	}
+}
+
+func TestStatusRequestCountIncludesAllRoutes(t *testing.T) {
+	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/healthz", nil))
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/missing", nil))
+	status := httptest.NewRecorder()
+	h.ServeHTTP(status, httptest.NewRequest("GET", "/status", nil))
+	var body map[string]any
+	if err := json.Unmarshal(status.Body.Bytes(), &body); err != nil || body["requests_total"] != float64(3) {
+		t.Fatalf("status=%d body=%s", status.Code, status.Body.String())
+	}
 }
 
 func TestAddress(t *testing.T) {

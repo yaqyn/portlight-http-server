@@ -6,11 +6,13 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"sync/atomic"
 	"time"
 )
 
 func handler(logger *slog.Logger) http.Handler {
 	started := time.Now()
+	var requests atomic.Uint64
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "description": "A small Go HTTP service, built to run predictably.", "version": version})
@@ -19,7 +21,7 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "version": version})
 	})
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "started_at": started.UTC().Format(time.RFC3339), "uptime_seconds": int64(time.Since(started).Seconds())})
+		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "started_at": started.UTC().Format(time.RFC3339), "uptime_seconds": int64(time.Since(started).Seconds()), "requests_total": requests.Load()})
 	})
 	for _, path := range []string{"/healthz", "/livez", "/readyz"} {
 		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +32,7 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
 		start := time.Now()
 		requestID := rand.Text()
 		w.Header().Set("X-Request-ID", requestID)
