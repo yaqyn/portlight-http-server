@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -35,11 +36,12 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests.Add(1)
+		requestNumber := requests.Add(1)
 		start := time.Now()
 		requestID := rand.Text()
 		w.Header().Set("X-Request-ID", requestID)
 		w.Header().Set("X-Service-Version", version)
+		w.Header().Set("X-Request-Count", strconv.FormatUint(requestNumber, 10))
 		recorder := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")

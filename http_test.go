@@ -57,6 +57,17 @@ func TestStatusRequestCountIncludesAllRoutes(t *testing.T) {
 	}
 }
 
+func TestResponseRequestCountIsMonotonic(t *testing.T) {
+	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	for index, expected := range []string{"1", "2", "3"} {
+		response := httptest.NewRecorder()
+		h.ServeHTTP(response, httptest.NewRequest("GET", "/healthz", nil))
+		if response.Header().Get("X-Request-Count") != expected {
+			t.Fatalf("request %d count=%q", index+1, response.Header().Get("X-Request-Count"))
+		}
+	}
+}
+
 func TestTimeEndpointReportsUTC(t *testing.T) {
 	response := httptest.NewRecorder()
 	handler(slog.Default()).ServeHTTP(response, httptest.NewRequest("GET", "/time", nil))
