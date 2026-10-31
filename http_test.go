@@ -57,6 +57,29 @@ func TestStatusRequestCountIncludesAllRoutes(t *testing.T) {
 	}
 }
 
+func TestResponseRequestCountIsMonotonic(t *testing.T) {
+	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	for index, expected := range []string{"1", "2", "3"} {
+		response := httptest.NewRecorder()
+		h.ServeHTTP(response, httptest.NewRequest("GET", "/healthz", nil))
+		if response.Header().Get("X-Request-Count") != expected {
+			t.Fatalf("request %d count=%q", index+1, response.Header().Get("X-Request-Count"))
+		}
+	}
+}
+
+func TestTimeEndpointReportsUTC(t *testing.T) {
+	response := httptest.NewRecorder()
+	handler(slog.Default()).ServeHTTP(response, httptest.NewRequest("GET", "/time", nil))
+	var body map[string]string
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != 200 {
+		t.Fatalf("time: %d %s", response.Code, response.Body.String())
+	}
+	if _, err := time.Parse(time.RFC3339Nano, body["now"]); err != nil || body["status"] != "ok" {
+		t.Fatalf("invalid time response: %v", body)
+	}
+}
+
 func TestAddress(t *testing.T) {
 	for _, tc := range []struct {
 		port, want string

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -23,6 +24,9 @@ func handler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "started_at": started.UTC().Format(time.RFC3339), "uptime_seconds": int64(time.Since(started).Seconds()), "requests_total": requests.Load()})
 	})
+	mux.HandleFunc("GET /time", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "status": "ok", "now": time.Now().UTC().Format(time.RFC3339Nano)})
+	})
 	for _, path := range []string{"/healthz", "/livez", "/readyz"} {
 		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -32,11 +36,12 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests.Add(1)
+		requestNumber := requests.Add(1)
 		start := time.Now()
 		requestID := rand.Text()
 		w.Header().Set("X-Request-ID", requestID)
 		w.Header().Set("X-Service-Version", version)
+		w.Header().Set("X-Request-Count", strconv.FormatUint(requestNumber, 10))
 		recorder := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
@@ -52,7 +57,7 @@ func handler(logger *slog.Logger) http.Handler {
 			}
 			logger.Info("request", "request_id", requestID, "method", r.Method, "path", r.URL.Path, "status", recorder.status, "bytes_written", recorder.bytes, "duration_ms", time.Since(start).Milliseconds())
 		}()
-		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
+		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/time" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
 		if known && r.Method == http.MethodOptions {
 			w.Header().Set("Allow", "GET, HEAD, OPTIONS")
 			recorder.WriteHeader(http.StatusNoContent)
