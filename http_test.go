@@ -57,6 +57,18 @@ func TestStatusRequestCountIncludesAllRoutes(t *testing.T) {
 	}
 }
 
+func TestTimeEndpointReportsUTC(t *testing.T) {
+	response := httptest.NewRecorder()
+	handler(slog.Default()).ServeHTTP(response, httptest.NewRequest("GET", "/time", nil))
+	var body map[string]string
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != 200 {
+		t.Fatalf("time: %d %s", response.Code, response.Body.String())
+	}
+	if _, err := time.Parse(time.RFC3339Nano, body["now"]); err != nil || body["status"] != "ok" {
+		t.Fatalf("invalid time response: %v", body)
+	}
+}
+
 func TestAddress(t *testing.T) {
 	for _, tc := range []struct {
 		port, want string
