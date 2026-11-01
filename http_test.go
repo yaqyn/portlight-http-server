@@ -90,6 +90,20 @@ func TestRequestEndpointDescribesTheCurrentRequest(t *testing.T) {
 	}
 }
 
+func TestVersionEndpointSupportsConditionalRequests(t *testing.T) {
+	h := handler(slog.Default())
+	first := httptest.NewRecorder()
+	h.ServeHTTP(first, httptest.NewRequest("GET", "/version", nil))
+	etag := first.Header().Get("ETag")
+	request := httptest.NewRequest("GET", "/version", nil)
+	request.Header.Set("If-None-Match", etag)
+	conditional := httptest.NewRecorder()
+	h.ServeHTTP(conditional, request)
+	if etag == "" || first.Header().Get("Cache-Control") != "no-cache" || conditional.Code != http.StatusNotModified || conditional.Body.Len() != 0 {
+		t.Fatalf("etag=%q first=%v conditional=%d %q", etag, first.Header(), conditional.Code, conditional.Body.String())
+	}
+}
+
 func TestAddress(t *testing.T) {
 	for _, tc := range []struct {
 		port, want string

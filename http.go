@@ -19,6 +19,13 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "description": "A small Go HTTP service, built to run predictably.", "version": version})
 	})
 	mux.HandleFunc("GET /version", func(w http.ResponseWriter, r *http.Request) {
+		etag := strconv.Quote(version)
+		w.Header().Set("ETag", etag)
+		w.Header().Set("Cache-Control", "no-cache")
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "version": version})
 	})
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
