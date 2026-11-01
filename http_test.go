@@ -168,14 +168,15 @@ func TestHTTPContract(t *testing.T) {
 	for _, tc := range []struct {
 		method, path string
 		status       int
-	}{{"GET", "/", 200}, {"GET", "/version", 200}, {"GET", "/status", 200}, {"GET", "/request", 200}, {"GET", "/healthz", 200}, {"GET", "/livez", 200}, {"GET", "/readyz", 200}, {"HEAD", "/", 200}, {"OPTIONS", "/status", 204}, {"GET", "/missing", 404}, {"POST", "/missing", 404}, {"POST", "/", 405}, {"POST", "/status", 405}, {"POST", "/healthz", 405}, {"POST", "/livez", 405}} {
+		cacheControl string
+	}{{"GET", "/", 200, "no-store"}, {"GET", "/version", 200, "no-cache"}, {"GET", "/status", 200, "no-store"}, {"GET", "/request", 200, "no-store"}, {"GET", "/healthz", 200, "no-store"}, {"GET", "/livez", 200, "no-store"}, {"GET", "/readyz", 200, "no-store"}, {"HEAD", "/", 200, "no-store"}, {"OPTIONS", "/status", 204, "no-store"}, {"GET", "/missing", 404, "no-store"}, {"POST", "/missing", 404, "no-store"}, {"POST", "/", 405, "no-store"}, {"POST", "/status", 405, "no-store"}, {"POST", "/healthz", 405, "no-store"}, {"POST", "/livez", 405, "no-store"}} {
 		t.Run(tc.method+tc.path, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			h.ServeHTTP(w, httptest.NewRequest(tc.method, tc.path, nil))
 			if w.Code != tc.status {
 				t.Fatalf("status %d, want %d", w.Code, tc.status)
 			}
-			if w.Header().Get("X-Content-Type-Options") != "nosniff" || w.Header().Get("Cache-Control") != "no-store" {
+			if w.Header().Get("X-Content-Type-Options") != "nosniff" || w.Header().Get("Cache-Control") != tc.cacheControl {
 				t.Fatal("missing response safeguards")
 			}
 			if w.Header().Get("X-Service-Version") != version {
