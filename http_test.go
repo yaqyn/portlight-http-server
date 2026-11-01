@@ -80,6 +80,16 @@ func TestTimeEndpointReportsUTC(t *testing.T) {
 	}
 }
 
+func TestRequestEndpointDescribesTheCurrentRequest(t *testing.T) {
+	request := httptest.NewRequest("GET", "https://example.test/request", nil)
+	response := httptest.NewRecorder()
+	handler(slog.Default()).ServeHTTP(response, request)
+	var body map[string]string
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || body["method"] != "GET" || body["protocol"] != "HTTP/1.1" || body["host"] != "example.test" {
+		t.Fatalf("request response: %d %s", response.Code, response.Body.String())
+	}
+}
+
 func TestAddress(t *testing.T) {
 	for _, tc := range []struct {
 		port, want string
@@ -144,7 +154,7 @@ func TestHTTPContract(t *testing.T) {
 	for _, tc := range []struct {
 		method, path string
 		status       int
-	}{{"GET", "/", 200}, {"GET", "/version", 200}, {"GET", "/status", 200}, {"GET", "/healthz", 200}, {"GET", "/livez", 200}, {"GET", "/readyz", 200}, {"HEAD", "/", 200}, {"OPTIONS", "/status", 204}, {"GET", "/missing", 404}, {"POST", "/missing", 404}, {"POST", "/", 405}, {"POST", "/status", 405}, {"POST", "/healthz", 405}, {"POST", "/livez", 405}} {
+	}{{"GET", "/", 200}, {"GET", "/version", 200}, {"GET", "/status", 200}, {"GET", "/request", 200}, {"GET", "/healthz", 200}, {"GET", "/livez", 200}, {"GET", "/readyz", 200}, {"HEAD", "/", 200}, {"OPTIONS", "/status", 204}, {"GET", "/missing", 404}, {"POST", "/missing", 404}, {"POST", "/", 405}, {"POST", "/status", 405}, {"POST", "/healthz", 405}, {"POST", "/livez", 405}} {
 		t.Run(tc.method+tc.path, func(t *testing.T) {
 			w := httptest.NewRecorder()
 			h.ServeHTTP(w, httptest.NewRequest(tc.method, tc.path, nil))
@@ -202,7 +212,7 @@ func TestHTTPContract(t *testing.T) {
 
 func TestHeadReturnsHeadersWithoutAResponseBody(t *testing.T) {
 	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
-	for _, path := range []string{"/", "/version", "/status", "/healthz", "/livez", "/readyz"} {
+	for _, path := range []string{"/", "/version", "/status", "/request", "/healthz", "/livez", "/readyz"} {
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, httptest.NewRequest(http.MethodHead, path, nil))
 		if w.Code != 200 || w.Body.Len() != 0 || w.Header().Get("Content-Type") != "application/json; charset=utf-8" {

@@ -27,6 +27,9 @@ func handler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /time", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "status": "ok", "now": time.Now().UTC().Format(time.RFC3339Nano)})
 	})
+	mux.HandleFunc("GET /request", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "status": "ok", "method": r.Method, "protocol": r.Proto, "host": r.Host})
+	})
 	for _, path := range []string{"/healthz", "/livez", "/readyz"} {
 		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -57,7 +60,7 @@ func handler(logger *slog.Logger) http.Handler {
 			}
 			logger.Info("request", "request_id", requestID, "method", r.Method, "path", r.URL.Path, "status", recorder.status, "bytes_written", recorder.bytes, "duration_ms", time.Since(start).Milliseconds())
 		}()
-		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/time" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
+		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/time" || r.URL.Path == "/request" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
 		if known && r.Method == http.MethodOptions {
 			w.Header().Set("Allow", "GET, HEAD, OPTIONS")
 			recorder.WriteHeader(http.StatusNoContent)
