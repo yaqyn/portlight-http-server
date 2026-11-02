@@ -10,6 +10,28 @@ validated configuration, structured logs, and a minimal runtime image.
 
 [Install the service](#-installation) · [View the HTTP contract](#-api-reference) · [Read operating boundaries](#-security-and-limitations)
 
+## Motivation
+
+Portlight makes a small HTTP service easy to run and inspect. Health checks, request logs, and graceful shutdown make its behavior clear during local development and container operation.
+
+## Quick Start
+
+Clone the repository and launch the service:
+
+```bash
+git clone https://github.com/yaqyn/portlight-http-server.git
+cd portlight-http-server
+./launch
+```
+
+## Usage
+
+Use `./launch help` to see available commands. The service reports its local URL after readiness checks pass; endpoint behavior is documented in the API reference below.
+
+## Contributing
+
+For local development, install Go 1.27.1+, run `go test ./...`, and open a pull request with the change and its verification. See the installation and verification sections for setup details.
+
 ## <img src="docs/readme/icons/features.svg" width="24" height="24" alt=""> Features
 
 - **Explicit behavior:** GET and HEAD routes, real 404s, and method rejection.
