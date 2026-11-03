@@ -41,7 +41,7 @@ func handler(logger *slog.Logger) http.Handler {
 	})
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
-		fmt.Fprintf(w, "portlight_requests_total %d\nportlight_uptime_seconds %d\n", requests.Load(), int64(time.Since(started).Seconds()))
+		fmt.Fprintf(w, "# HELP portlight_requests_total Requests handled since service start.\n# TYPE portlight_requests_total counter\nportlight_requests_total %d\n# HELP portlight_uptime_seconds Service uptime in seconds.\n# TYPE portlight_uptime_seconds gauge\nportlight_uptime_seconds %d\n", requests.Load(), int64(time.Since(started).Seconds()))
 	})
 	for _, path := range []string{"/healthz", "/livez", "/readyz"} {
 		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, r *http.Request) {

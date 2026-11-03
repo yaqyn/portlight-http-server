@@ -105,6 +105,11 @@ func TestMetricsExposeRequestCountAndUptime(t *testing.T) {
 	if response.Header().Get("Content-Type") != "text/plain; version=0.0.4; charset=utf-8" {
 		t.Fatalf("content type: %q", response.Header().Get("Content-Type"))
 	}
+	for _, want := range []string{"# HELP portlight_requests_total", "# TYPE portlight_requests_total counter", "# HELP portlight_uptime_seconds", "# TYPE portlight_uptime_seconds gauge"} {
+		if !strings.Contains(response.Body.String(), want) {
+			t.Fatalf("metrics omitted %q: %s", want, response.Body.String())
+		}
+	}
 }
 
 func TestVersionEndpointSupportsConditionalRequests(t *testing.T) {
