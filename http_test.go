@@ -196,6 +196,9 @@ func TestHTTPContract(t *testing.T) {
 			if w.Header().Get("X-Service-Version") != version {
 				t.Fatal("missing service version header")
 			}
+			if _, err := time.Parse(time.RFC3339, w.Header().Get("X-Service-Started-At")); err != nil {
+				t.Fatal("missing service start header")
+			}
 			if w.Header().Get("Permissions-Policy") == "" || w.Header().Get("Cross-Origin-Resource-Policy") != "same-origin" {
 				t.Fatal("missing browser isolation headers")
 			}

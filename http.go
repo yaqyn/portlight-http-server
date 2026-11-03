@@ -56,6 +56,7 @@ func handler(logger *slog.Logger) http.Handler {
 		requestID := rand.Text()
 		w.Header().Set("X-Request-ID", requestID)
 		w.Header().Set("X-Service-Version", version)
+		w.Header().Set("X-Service-Started-At", started.UTC().Format(time.RFC3339))
 		w.Header().Set("X-Request-Count", strconv.FormatUint(requestNumber, 10))
 		recorder := &responseWriter{ResponseWriter: w, status: http.StatusOK}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
