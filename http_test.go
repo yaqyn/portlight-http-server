@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -87,6 +88,19 @@ func TestRequestEndpointDescribesTheCurrentRequest(t *testing.T) {
 	var body map[string]string
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || body["method"] != "GET" || body["protocol"] != "HTTP/1.1" || body["host"] != "example.test" {
 		t.Fatalf("request response: %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestMetricsExposeRequestCountAndUptime(t *testing.T) {
+	h := handler(slog.Default())
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/healthz", nil))
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, httptest.NewRequest("GET", "/metrics", nil))
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "portlight_requests_total 2") || !strings.Contains(response.Body.String(), "portlight_uptime_seconds ") {
+		t.Fatalf("metrics: %d %s", response.Code, response.Body.String())
+	}
+	if response.Header().Get("Content-Type") != "text/plain; version=0.0.4; charset=utf-8" {
+		t.Fatalf("content type: %q", response.Header().Get("Content-Type"))
 	}
 }
 
