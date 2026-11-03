@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"sync/atomic"
@@ -30,7 +31,7 @@ func handler(logger *slog.Logger) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "version": version})
 	})
 	mux.HandleFunc("GET /status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "started_at": started.UTC().Format(time.RFC3339), "uptime_seconds": int64(time.Since(started).Seconds()), "requests_total": requests.Load()})
+		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "started_at": started.UTC().Format(time.RFC3339), "uptime_seconds": int64(time.Since(started).Seconds()), "requests_total": requests.Load(), "go_version": runtime.Version(), "goroutines": runtime.NumGoroutine()})
 	})
 	mux.HandleFunc("GET /time", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "status": "ok", "now": time.Now().UTC().Format(time.RFC3339Nano)})

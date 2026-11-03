@@ -44,6 +44,9 @@ func TestStatusReportsServiceUptime(t *testing.T) {
 	if body["requests_total"] != float64(1) {
 		t.Fatalf("unexpected request count: %v", body)
 	}
+	if body["go_version"] == "" || body["goroutines"].(float64) < 1 {
+		t.Fatalf("missing runtime metadata: %v", body)
+	}
 }
 
 func TestStatusRequestCountIncludesAllRoutes(t *testing.T) {
