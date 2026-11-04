@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -91,6 +92,20 @@ func TestRequestEndpointDescribesTheCurrentRequest(t *testing.T) {
 	var body map[string]string
 	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || body["method"] != "GET" || body["protocol"] != "HTTP/1.1" || body["host"] != "example.test" {
 		t.Fatalf("request response: %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestRoutesEndpointListsDiscoverablePaths(t *testing.T) {
+	response := httptest.NewRecorder()
+	handler(slog.Default()).ServeHTTP(response, httptest.NewRequest("GET", "/routes", nil))
+	var body struct {
+		Routes []string `json:"routes"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != http.StatusOK {
+		t.Fatalf("routes: %d %s", response.Code, response.Body.String())
+	}
+	if !slices.Contains(body.Routes, "/status") || !slices.Contains(body.Routes, "/routes") {
+		t.Fatalf("routes=%v", body.Routes)
 	}
 }
 

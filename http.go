@@ -39,6 +39,9 @@ func handler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /request", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"service": "Portlight", "status": "ok", "method": r.Method, "protocol": r.Proto, "host": r.Host})
 	})
+	mux.HandleFunc("GET /routes", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "routes": []string{"/", "/build", "/healthz", "/livez", "/metrics", "/readyz", "/request", "/routes", "/status", "/time", "/version"}})
+	})
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 		fmt.Fprintf(w, "# HELP portlight_requests_total Requests handled since service start.\n# TYPE portlight_requests_total counter\nportlight_requests_total %d\n# HELP portlight_uptime_seconds Service uptime in seconds.\n# TYPE portlight_uptime_seconds gauge\nportlight_uptime_seconds %d\n", requests.Load(), int64(time.Since(started).Seconds()))
@@ -74,7 +77,7 @@ func handler(logger *slog.Logger) http.Handler {
 			}
 			logger.Info("request", "request_id", requestID, "method", r.Method, "path", r.URL.Path, "status", recorder.status, "bytes_written", recorder.bytes, "duration_ms", time.Since(start).Milliseconds())
 		}()
-		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/time" || r.URL.Path == "/request" || r.URL.Path == "/metrics" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
+		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/time" || r.URL.Path == "/request" || r.URL.Path == "/routes" || r.URL.Path == "/build" || r.URL.Path == "/metrics" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
 		if known && r.Method == http.MethodOptions {
 			w.Header().Set("Allow", "GET, HEAD, OPTIONS")
 			recorder.WriteHeader(http.StatusNoContent)
