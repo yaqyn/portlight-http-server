@@ -42,6 +42,21 @@ func handler(logger *slog.Logger) http.Handler {
 	mux.HandleFunc("GET /routes", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "routes": []string{"/", "/build", "/healthz", "/livez", "/metrics", "/readyz", "/request", "/routes", "/status", "/time", "/version"}})
 	})
+	mux.HandleFunc("GET /build", func(w http.ResponseWriter, r *http.Request) {
+		module, revision, modified := "", "", false
+		if info, ok := debug.ReadBuildInfo(); ok {
+			module = info.Main.Path
+			for _, setting := range info.Settings {
+				switch setting.Key {
+				case "vcs.revision":
+					revision = setting.Value
+				case "vcs.modified":
+					modified = setting.Value == "true"
+				}
+			}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"service": "Portlight", "status": "ok", "version": version, "module": module, "revision": revision, "modified": modified, "go_version": runtime.Version(), "goos": runtime.GOOS, "goarch": runtime.GOARCH})
+	})
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 		fmt.Fprintf(w, "# HELP portlight_requests_total Requests handled since service start.\n# TYPE portlight_requests_total counter\nportlight_requests_total %d\n# HELP portlight_uptime_seconds Service uptime in seconds.\n# TYPE portlight_uptime_seconds gauge\nportlight_uptime_seconds %d\n", requests.Load(), int64(time.Since(started).Seconds()))
