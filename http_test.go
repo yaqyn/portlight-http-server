@@ -121,6 +121,18 @@ func TestBuildEndpointDescribesTheRuntimeTarget(t *testing.T) {
 	}
 }
 
+func TestMemoryEndpointReportsRuntimeUsage(t *testing.T) {
+	response := httptest.NewRecorder()
+	handler(slog.Default()).ServeHTTP(response, httptest.NewRequest("GET", "/memory", nil))
+	var body map[string]any
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || response.Code != http.StatusOK {
+		t.Fatalf("memory: %d %s", response.Code, response.Body.String())
+	}
+	if body["allocated_bytes"].(float64) <= 0 || body["heap_objects"].(float64) <= 0 {
+		t.Fatalf("memory=%v", body)
+	}
+}
+
 func TestMetricsExposeRequestCountAndUptime(t *testing.T) {
 	h := handler(slog.Default())
 	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/healthz", nil))
