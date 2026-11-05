@@ -87,10 +87,12 @@ func TestTimeEndpointReportsUTC(t *testing.T) {
 
 func TestRequestEndpointDescribesTheCurrentRequest(t *testing.T) {
 	request := httptest.NewRequest("GET", "https://example.test/request", nil)
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("User-Agent", "portlight-check/1.0")
 	response := httptest.NewRecorder()
 	handler(slog.Default()).ServeHTTP(response, request)
 	var body map[string]string
-	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || body["method"] != "GET" || body["protocol"] != "HTTP/1.1" || body["host"] != "example.test" {
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil || body["method"] != "GET" || body["protocol"] != "HTTP/1.1" || body["host"] != "example.test" || body["accept"] != "application/json" || body["user_agent"] != "portlight-check/1.0" {
 		t.Fatalf("request response: %d %s", response.Code, response.Body.String())
 	}
 }
