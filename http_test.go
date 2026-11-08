@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -323,12 +324,31 @@ func TestHTTPContract(t *testing.T) {
 
 func TestHeadReturnsHeadersWithoutAResponseBody(t *testing.T) {
 	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
-	for _, path := range []string{"/", "/version", "/status", "/request", "/healthz", "/livez", "/readyz"} {
+	for _, path := range []string{"/", "/version", "/status", "/request", "/metrics", "/healthz", "/livez", "/readyz"} {
+		get := httptest.NewRecorder()
+		h.ServeHTTP(get, httptest.NewRequest(http.MethodGet, path, nil))
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, httptest.NewRequest(http.MethodHead, path, nil))
-		if w.Code != 200 || w.Body.Len() != 0 || w.Header().Get("Content-Type") != "application/json; charset=utf-8" {
+		if w.Code != 200 || w.Body.Len() != 0 {
 			t.Fatalf("%s: status=%d body=%q headers=%v", path, w.Code, w.Body.String(), w.Header())
 		}
+		if w.Header().Get("Content-Type") != get.Header().Get("Content-Type") {
+			t.Fatalf("%s: HEAD content type %q, GET content type %q", path, w.Header().Get("Content-Type"), get.Header().Get("Content-Type"))
+		}
+		if w.Header().Get("Content-Length") != strconv.Itoa(get.Body.Len()) {
+			t.Fatalf("%s: HEAD length %q, GET body length %d", path, w.Header().Get("Content-Length"), get.Body.Len())
+		}
+	}
+}
+
+func TestConditionalHeadOmitsRepresentationLength(t *testing.T) {
+	h := handler(slog.Default())
+	request := httptest.NewRequest(http.MethodHead, "/version", nil)
+	request.Header.Set("If-None-Match", strconv.Quote(version))
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, request)
+	if response.Code != http.StatusNotModified || response.Body.Len() != 0 || response.Header().Get("Content-Length") != "" {
+		t.Fatalf("status=%d body=%q headers=%v", response.Code, response.Body.String(), response.Header())
 	}
 }
 

@@ -118,7 +118,9 @@ func handler(logger *slog.Logger) http.Handler {
 			return
 		}
 		if r.Method == http.MethodHead {
-			mux.ServeHTTP(&headResponseWriter{ResponseWriter: recorder}, r)
+			head := &headResponseWriter{ResponseWriter: recorder}
+			mux.ServeHTTP(head, r)
+			head.commit()
 			return
 		}
 		mux.ServeHTTP(recorder, r)
@@ -135,9 +137,35 @@ func matchesIfNoneMatch(header, etag string) bool {
 	return false
 }
 
-type headResponseWriter struct{ http.ResponseWriter }
+type headResponseWriter struct {
+	http.ResponseWriter
+	status int
+	bytes  int
+}
 
-func (w *headResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
+func (w *headResponseWriter) WriteHeader(status int) {
+	if w.status == 0 {
+		w.status = status
+	}
+}
+
+func (w *headResponseWriter) Write(p []byte) (int, error) {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	w.bytes += len(p)
+	return len(p), nil
+}
+
+func (w *headResponseWriter) commit() {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	if w.status != http.StatusNoContent && w.status != http.StatusNotModified && w.Header().Get("Content-Length") == "" {
+		w.Header().Set("Content-Length", strconv.Itoa(w.bytes))
+	}
+	w.ResponseWriter.WriteHeader(w.status)
+}
 
 type responseWriter struct {
 	http.ResponseWriter
