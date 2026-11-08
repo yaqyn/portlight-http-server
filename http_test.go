@@ -167,6 +167,36 @@ func TestVersionEndpointSupportsConditionalRequests(t *testing.T) {
 	}
 }
 
+func TestVersionConditionalRequestsAcceptListsWildcardsAndWeakTags(t *testing.T) {
+	h := handler(slog.Default())
+	first := httptest.NewRecorder()
+	h.ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/version", nil))
+	etag := first.Header().Get("ETag")
+	for _, condition := range []string{
+		`"another-version", ` + etag,
+		"W/" + etag,
+		"*",
+	} {
+		t.Run(condition, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, "/version", nil)
+			request.Header.Set("If-None-Match", condition)
+			response := httptest.NewRecorder()
+			h.ServeHTTP(response, request)
+			if response.Code != http.StatusNotModified || response.Body.Len() != 0 {
+				t.Fatalf("condition=%q status=%d body=%q", condition, response.Code, response.Body.String())
+			}
+		})
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/version", nil)
+	request.Header.Set("If-None-Match", `"another-version"`)
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("nonmatching condition returned %d", response.Code)
+	}
+}
+
 func TestAddress(t *testing.T) {
 	for _, tc := range []struct {
 		port, want string

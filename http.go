@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -24,7 +25,7 @@ func handler(logger *slog.Logger) http.Handler {
 		etag := strconv.Quote(version)
 		w.Header().Set("ETag", etag)
 		w.Header().Set("Cache-Control", "no-cache")
-		if r.Header.Get("If-None-Match") == etag {
+		if matchesIfNoneMatch(r.Header.Get("If-None-Match"), etag) {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
@@ -122,6 +123,16 @@ func handler(logger *slog.Logger) http.Handler {
 		}
 		mux.ServeHTTP(recorder, r)
 	})
+}
+
+func matchesIfNoneMatch(header, etag string) bool {
+	for _, candidate := range strings.Split(header, ",") {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "*" || strings.TrimPrefix(candidate, "W/") == etag {
+			return true
+		}
+	}
+	return false
 }
 
 type headResponseWriter struct{ http.ResponseWriter }
