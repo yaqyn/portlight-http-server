@@ -119,7 +119,9 @@ func handler(logger *slog.Logger) http.Handler {
 		}
 		if r.Method == http.MethodHead {
 			head := &headResponseWriter{ResponseWriter: recorder}
-			mux.ServeHTTP(head, r)
+			getRequest := r.Clone(r.Context())
+			getRequest.Method = http.MethodGet
+			mux.ServeHTTP(head, getRequest)
 			head.commit()
 			return
 		}
