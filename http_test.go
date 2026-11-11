@@ -367,3 +367,15 @@ func TestKnownRoutesRejectAmbiguousQueryParameters(t *testing.T) {
 		}
 	}
 }
+
+func TestEveryMethodRejectsAmbiguousQueryParameters(t *testing.T) {
+	h := handler(slog.New(slog.NewJSONHandler(io.Discard, nil)))
+	for _, method := range []string{http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPost} {
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest(method, "/status?format=text", nil))
+		var body map[string]string
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || w.Code != http.StatusBadRequest || body["error"] != "query parameters are not supported" {
+			t.Fatalf("%s: %d %s", method, w.Code, w.Body.String())
+		}
+	}
+}
