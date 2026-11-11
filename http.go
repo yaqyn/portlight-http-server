@@ -99,22 +99,22 @@ func handler(logger *slog.Logger) http.Handler {
 			logger.Info("request", "request_id", requestID, "method", r.Method, "path", r.URL.Path, "status", recorder.status, "bytes_written", recorder.bytes, "duration_ms", time.Since(start).Milliseconds())
 		}()
 		known := r.URL.Path == "/" || r.URL.Path == "/version" || r.URL.Path == "/status" || r.URL.Path == "/time" || r.URL.Path == "/request" || r.URL.Path == "/routes" || r.URL.Path == "/build" || r.URL.Path == "/memory" || r.URL.Path == "/metrics" || r.URL.Path == "/healthz" || r.URL.Path == "/livez" || r.URL.Path == "/readyz"
-		if known && r.Method == http.MethodOptions {
-			w.Header().Set("Allow", "GET, HEAD, OPTIONS")
-			recorder.WriteHeader(http.StatusNoContent)
-			return
-		}
-		if known && r.Method != http.MethodGet && r.Method != http.MethodHead {
-			w.Header().Set("Allow", "GET, HEAD")
-			writeJSON(recorder, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-			return
-		}
 		if !known {
 			writeJSON(recorder, http.StatusNotFound, map[string]string{"error": "not found"})
 			return
 		}
 		if r.URL.RawQuery != "" {
 			writeJSON(recorder, http.StatusBadRequest, map[string]string{"error": "query parameters are not supported"})
+			return
+		}
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Allow", "GET, HEAD, OPTIONS")
+			recorder.WriteHeader(http.StatusNoContent)
+			return
+		}
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			writeJSON(recorder, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 			return
 		}
 		if r.Method == http.MethodHead {
