@@ -25,25 +25,26 @@ case "$action" in
   start|stop|status|check|logs) ;;
   *) usage >&2; exit 2 ;;
 esac
-command -v docker >/dev/null || fail 'Install Docker Engine and the Compose plugin, then retry.'
-docker compose version >/dev/null 2>&1 || fail 'Docker Compose v2 is required.'
-docker info >/dev/null 2>&1 || fail 'Cannot reach Docker. Start the daemon and check socket permissions (on Linux, try newgrp docker).'
 export HOST_PORT="${HOST_PORT:-8991}"
 [[ "$HOST_PORT" =~ ^[0-9]{1,5}$ ]] || fail 'HOST_PORT must be an integer between 1 and 65535.'
 HOST_PORT=$((10#$HOST_PORT))
 [[ "$HOST_PORT" -ge 1 && "$HOST_PORT" -le 65535 ]] || fail 'HOST_PORT must be an integer between 1 and 65535.'
+ready_url="http://127.0.0.1:${HOST_PORT}/readyz"
+if [[ "$action" == check ]]; then
+  command -v curl >/dev/null || fail 'Install curl, then retry.'
+  curl --fail --silent --show-error --max-time 2 "$ready_url" >/dev/null || fail "Service is not ready at $ready_url. Use ./launch status or ./launch logs to investigate."
+  printf 'Ready: %s\n' "$ready_url"
+  exit 0
+fi
+command -v docker >/dev/null || fail 'Install Docker Engine and the Compose plugin, then retry.'
+docker compose version >/dev/null 2>&1 || fail 'Docker Compose v2 is required.'
+docker info >/dev/null 2>&1 || fail 'Cannot reach Docker. Start the daemon and check socket permissions (on Linux, try newgrp docker).'
 case "$action" in
   stop) docker compose down; printf 'Portlight stopped.\n'; exit 0 ;;
   status) docker compose ps -a; exit 0 ;;
   logs) docker compose logs --follow --tail=100 portlight; exit 0 ;;
 esac
 command -v curl >/dev/null || fail 'Install curl, then retry.'
-ready_url="http://127.0.0.1:${HOST_PORT}/readyz"
-if [[ "$action" == check ]]; then
-  curl --fail --silent --show-error --max-time 2 "$ready_url" >/dev/null || fail "Service is not ready at $ready_url. Use ./launch status or ./launch logs to investigate."
-  printf 'Ready: %s\n' "$ready_url"
-  exit 0
-fi
 printf '\nPortlight — HTTP Server\nBuilding and starting on http://localhost:%s ...\n\n' "$HOST_PORT"
 if ! docker compose up --build --detach; then
   fail "Startup failed. Check the output above; if the port is occupied, try HOST_PORT=8992 ./launch."
