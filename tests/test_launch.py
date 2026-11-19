@@ -74,7 +74,9 @@ class LauncherTests(unittest.TestCase):
                 result = self.launch(args)
                 self.assertEqual(result.returncode, status)
                 self.assertFalse(self.calls.exists())
-        self.assertIn('check', self.launch('help').stdout)
+        help_text = self.launch('help').stdout
+        self.assertIn('check', help_text)
+        self.assertIn('checking does not require Docker', help_text)
 
 
 if __name__ == '__main__':

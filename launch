@@ -14,7 +14,8 @@ Usage: ./launch [start|stop|status|check|logs|help]
   logs    Follow service logs; Ctrl+C leaves the service running
 
 Set HOST_PORT to choose another local port, e.g. HOST_PORT=8992 ./launch.
-Requires Docker Engine and Docker Compose v2. Starting and checking also require curl.
+Start, stop, status, and logs require Docker Engine and Docker Compose v2.
+Starting and checking require curl; checking does not require Docker.
 HELP
 }
 fail() { printf 'Portlight: %s\n' "$*" >&2; exit 1; }
