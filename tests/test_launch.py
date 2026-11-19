@@ -30,13 +30,13 @@ class LauncherTests(unittest.TestCase):
                               env=self.env, text=True, capture_output=True)
 
     def test_check_does_not_start_containers(self):
+        self.command('docker', 'exit 99\n')
         result = self.launch('check')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('Ready: http://127.0.0.1:8991/readyz', result.stdout)
         calls = self.calls.read_text()
         self.assertIn('--max-time 2 http://127.0.0.1:8991/readyz', calls)
-        self.assertNotIn('compose up', calls)
-        self.assertNotIn('compose down', calls)
+        self.assertNotIn('docker ', calls)
 
     def test_check_failure_is_actionable(self):
         self.env['CURL_STATUS'] = '22'
@@ -58,7 +58,7 @@ class LauncherTests(unittest.TestCase):
                 self.env['HOST_PORT'] = port
                 result = self.launch('check')
                 self.assertEqual(result.returncode, 1)
-                self.assertNotIn('curl ', self.calls.read_text())
+                self.assertFalse(self.calls.exists())
 
     def test_start_waits_for_readiness(self):
         result = self.launch('start')
