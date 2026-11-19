@@ -311,7 +311,7 @@ func TestHTTPContract(t *testing.T) {
 				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || body["error"] != "method not allowed" {
 					t.Fatalf("unexpected method response: %s", w.Body)
 				}
-				if w.Header().Get("Allow") != "GET, HEAD" {
+				if w.Header().Get("Allow") != "GET, HEAD, OPTIONS" {
 					t.Fatal("missing Allow header")
 				}
 			}

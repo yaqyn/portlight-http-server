@@ -113,7 +113,7 @@ func handler(logger *slog.Logger) http.Handler {
 			return
 		}
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			w.Header().Set("Allow", "GET, HEAD")
+			w.Header().Set("Allow", "GET, HEAD, OPTIONS")
 			writeJSON(recorder, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 			return
 		}
